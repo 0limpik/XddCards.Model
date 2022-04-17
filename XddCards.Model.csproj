@@ -5,6 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove=".gitattributes" />
+    <None Remove=".gitignore" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.Runtime" Version="4.3.1" />
   </ItemGroup>
 
