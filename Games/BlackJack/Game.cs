@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Xdd.Model.Games.BlackJack.Users;
 
-[assembly: InternalsVisibleTo("Tests")]
 namespace Xdd.Model.Games.BlackJack
 {
     public class Game : IBlackJack
@@ -46,6 +44,9 @@ namespace Xdd.Model.Games.BlackJack
 
         public void Start()
         {
+            if (isGame)
+                throw new InvalidOperationException("game is start");
+
             isGame = true;
 
             _dealer.Reset();
@@ -92,8 +93,8 @@ namespace Xdd.Model.Games.BlackJack
 
             if (!GetNotNotifiedPlayers().Any())
             {
-                OnGameEnd?.Invoke();
                 isGame = false;
+                OnGameEnd?.Invoke();
                 return;
             }
 
@@ -131,13 +132,13 @@ namespace Xdd.Model.Games.BlackJack
                 player.InvokeOnResult(GameResult.Lose);
             }
 
-            OnGameEnd?.Invoke();
             isGame = false;
+            OnGameEnd?.Invoke();
 
             void Notify(GameResult result)
             {
-                isGame = false;
                 NotifyPlayers(result);
+                isGame = false;
                 OnGameEnd?.Invoke();
             }
         }
