@@ -1,12 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Xdd.Model.Cycles.BlackJack.Controllers
 {
     public interface IBetController : IState
     {
-        int HandCount { get; }
-        decimal Amount { get; }
+
     }
 
     internal class BetController : AState, IBetController
@@ -15,12 +15,9 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
         private const string c_userHasTBets = "At least one player must have a bet";
 
-        private User[] users;
+        internal List<User> users;
 
-        public decimal Amount => users.First().Amount;
-        public int HandCount => users.First().hands.Count;
-
-        internal BetController(User[] users)
+        internal void Init(List<User> users)
         {
             this.users = users;
         }
@@ -29,14 +26,14 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
         {
             Check(user);
 
-            return user.wallet.CanReserve(amount * user.hands.Count);
+            return user.wallet.CanReserve(amount * user._Hands.Count);
         }
 
         internal void Bet(User user, decimal amount)
         {
             Check(user);
 
-            if (!user.wallet.CanReserve(amount * user.hands.Count))
+            if (!user.wallet.CanReserve(amount * user._Hands.Count))
                 throw new ArgumentException("bet can't reserve");
 
             user.Amount = amount;
@@ -52,7 +49,7 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
             foreach (var user in users)
             {
                 if (user.Amount > 0)
-                    foreach (var hand in user.hands)
+                    foreach (var hand in user._Hands)
                     {
                         hand.bet = user.wallet.Reserve(user.Amount);
                     }
@@ -60,7 +57,7 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
                 user.Amount = 0;
             }
 
-            if (users.SelectMany(x => x.hands).All(x => !x.HasBet))
+            if (users.SelectMany(x => x._Hands).All(x => !x.HasBet))
                 throw new Exception(c_userHasTBets);
 
         }
@@ -85,6 +82,19 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
             if (!users.Contains(user))
                 throw new ArgumentException();
+        }
+
+        public override void Reset()
+        {
+            foreach (var user in users)
+            {
+                foreach (var hand in user._Hands)
+                {
+                    user.wallet.Cancel(hand.bet);
+                }
+
+                user.Amount = 0;
+            }
         }
     }
 }

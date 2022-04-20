@@ -12,6 +12,8 @@ namespace Xdd.Model.Cycles.BlackJack
 
         bool CanEnter(out string message);
         bool CanExit(out string message);
+
+        void Reset();
     }
 
     public abstract class AState : IState
@@ -67,5 +69,6 @@ namespace Xdd.Model.Cycles.BlackJack
             message = null;
             return true;
         }
+        public abstract void Reset();
     }
 }

@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Xdd.Model.Cash;
 using Xdd.Model.Games;
 using Xdd.Model.Games.BlackJack;
@@ -7,7 +9,21 @@ using Xdd.Model.Games.BlackJack.Users;
 
 namespace Xdd.Model.Cycles.BlackJack.Controllers
 {
-    public class GameController : AState
+    public interface IGameController
+    {
+        event Action<bool> OnChangeExecute;
+
+        event Action<ICard> OnDillerUpHiddenCard;
+        event Action OnGameEnd;
+
+        IHand DealerHand { get; }
+        IHand[] PlayerHands { get; }
+
+        void Start();
+        Task StartAsync();
+    }
+
+    internal class GameController : AState, IGameController
     {
         public override BJCycleStates State => BJCycleStates.Game;
 
@@ -27,17 +43,21 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
             remove => game.OnDillerUpHiddenCard -= value;
         }
 
-        public Hand dealerHand { get; private set; }
+        public IHand DealerHand => _DealerHand;
+        public Hand _DealerHand;
 
-        private User[] users;
+        private List<User> users;
 
-        private IPlayer[] Players => game.players;
+        public IHand[] PlayerHands => users.SelectMany(x => x._Hands).ToArray();
 
-        internal GameController(User[] users)
+        internal GameController()
+        {
+            _DealerHand = new Hand();
+        }
+
+        internal void Init(List<User> users)
         {
             this.users = users;
-
-            dealerHand = new Hand { player = game.dealer };
         }
 
         public void Start()
@@ -46,26 +66,26 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
             game.Start();
         }
 
-        public void Hit(IPlayer player)
+        internal bool Hit(IPlayer player)
         {
             CheckExecute();
-            player.Hit();
+            return player.Hit();
         }
 
-        public void Stand(IPlayer player)
+        internal void Stand(IPlayer player)
         {
             CheckExecute();
             player.Stand();
         }
 
-        public void DoubleUp(IPlayer player)
+        internal void DoubleUp(IPlayer player)
         {
             CheckExecute();
             foreach (var user in users)
             {
-                foreach (var hand in user.hands)
+                foreach (var hand in user._Hands)
                 {
-                    if (hand.player == player)
+                    if (hand.Player == player)
                     {
                         if (user.wallet.CanReserve(hand.bet.Amount))
                         {
@@ -87,22 +107,21 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
         protected override void Enter()
         {
-            game.Init(users
-            .SelectMany(x => x.hands)
-            .Where(x => x.HasBet)
-            .Count());
+            _DealerHand.Player = game.dealer;
+
+            var hands = users
+             .SelectMany(x => x._Hands)
+             .Where(x => x.HasBet);
+
+            game.Init(hands.Count());
 
             var playerCount = 0;
-
-            foreach (var player in users)
+            foreach (var hand in hands)
             {
-                foreach (var hand in player.hands)
-                {
-                    var user = game.players[playerCount++];
-                    hand.player = user;
+                var player = game.players[playerCount++];
+                hand.Player = player;
 
-                    user.OnResult += (result) => OnResult(result, player, hand);
-                }
+                player.OnResult += (result) => OnResult(result, hand);
             }
         }
 
@@ -111,7 +130,7 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
         }
 
-        private void OnResult(GameResult result, User player, Hand hand)
+        private void OnResult(GameResult result, Hand hand)
         {
             var bet = hand.bet;
             var doubleBet = hand.doubleBet;
@@ -126,21 +145,31 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
             {
                 if (result == GameResult.Win)
                 {
-                    player.wallet.Give(handleBet);
+                    hand.user.wallet.Give(handleBet);
                     return;
                 }
                 if (result == GameResult.Lose)
                 {
-                    player.wallet.Take(handleBet);
+                    hand.user.wallet.Take(handleBet);
                     return;
                 }
                 if (result == GameResult.Push)
                 {
-                    player.wallet.Cancel(handleBet);
+                    hand.user.wallet.Cancel(handleBet);
                     return;
                 }
                 throw new Exception($"uninspected {nameof(GameResult)}");
             }
+        }
+
+        public Task StartAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Reset()
+        {
+            game = new Game();
         }
     }
 }

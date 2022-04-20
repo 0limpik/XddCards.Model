@@ -4,50 +4,58 @@ using System.Linq;
 
 namespace Xdd.Model.Cycles.BlackJack.Controllers
 {
-    public class HandController : AState
+    public interface IHandController : IState
+    {
+        IHand[] AvalibleHands { get; }
+    }
+
+    internal class HandController : AState, IHandController
     {
         public override BJCycleStates State => BJCycleStates.Hand;
 
         private const string c_handCount = "Hand need more 0";
 
-        private User[] users;
-        private List<Hand> avalibleHands;
+        private List<User> users;
 
-        private int HandCount => users.SelectMany(x => x.hands).Count();
+        public IHand[] AvalibleHands => _AvalibleHands.ToArray();
+        private List<Hand> _AvalibleHands = new List<Hand>();
 
+        private int HandCount => users.SelectMany(x => x._Hands).Count();
 
-        internal HandController(User[] users, List<Hand> hands)
+        public void Init(List<User> users, int handCount)
         {
             this.users = users;
-            this.avalibleHands = hands;
+
+            _AvalibleHands.Clear();
+
+            for (int i = 0; i < handCount; i++)
+            {
+                _AvalibleHands.Add(new Hand());
+            }
         }
 
-        internal void Take(User user)
+        internal void Take(User user, IHand hand)
         {
             Check(user);
 
-            var hand = avalibleHands.FirstOrDefault();
+            var avalibleHand = _AvalibleHands.FirstOrDefault(x => x == hand) ?? throw new InvalidOperationException("has't free hand");
 
-            if (hand == null)
-                throw new InvalidOperationException("has't free hand");
+            _AvalibleHands.Remove(avalibleHand);
 
-            avalibleHands.Remove(hand);
-
-            user.hands.Add(hand);
+            avalibleHand.user = user;
+            user._Hands.Add(avalibleHand);
         }
 
-        internal void Release(User user)
+        internal void Release(User user, IHand hand)
         {
             Check(user);
 
-            var hand = user.hands.FirstOrDefault();
+            var userHand = user._Hands.FirstOrDefault(x => x == hand) ?? throw new ArgumentException("has't hands");
 
-            if (hand == null)
-                throw new ArgumentException("has't hands");
+            userHand.user = null;
+            user._Hands.Remove(userHand);
 
-            user.hands.Remove(hand);
-
-            avalibleHands.Add(hand);
+            _AvalibleHands.Add(userHand);
         }
 
         void Check(User user)
@@ -81,6 +89,11 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
                 message = c_handCount;
                 return false;
             }
+        }
+
+        public override void Reset()
+        {
+
         }
     }
 }

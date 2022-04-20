@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Xdd.Model.Games.BlackJack.Users;
 
-[assembly: InternalsVisibleTo("Tests")]
+[assembly: InternalsVisibleTo("XddCards.Tests")]
 namespace Xdd.Model.Games.BlackJack
 {
     public class Game : IBlackJack

@@ -22,56 +22,60 @@ namespace Xdd.Model.Cycles.BlackJack
     {
         public event Action<BJCycleStates> OnStateChange;
 
-        private User[] users;
-        private List<Hand> hands;
+        public IUser[] Users => _Users.ToArray();
+        private List<User> _Users = new List<User>();
 
-        public User[] Users => users.ToArray();
-        public Hand[] Hands => hands.ToArray();
+        public IHandController HandController => _HandController;
+        public HandController _HandController;
 
-        public HandController handController { get; private set; }
         public IBetController BetController => _BetController;
         private BetController _BetController;
-        public GameController gameController { get; private set; }
 
+        public IGameController GameController => _GameController;
+        public GameController _GameController;
 
         private IEnumerable<IState> States
         {
             get
             {
-                yield return handController;
+                yield return _HandController;
                 yield return _BetController;
-                yield return gameController;
+                yield return _GameController;
             }
         }
 
         public void Init(Wallet[] wallets, int handCount)
         {
-            users = new User[wallets.Length];
-            hands = new List<Hand>(handCount);
+            _HandController = new HandController();
+            _BetController = new BetController();
+            _GameController = new GameController();
+
+            _Users.Clear();
 
             for (int i = 0; i < wallets.Length; i++)
             {
-                users[i] = new User(wallets[i]);
+                var user = new User(wallets[i]);
+                user.Init(_HandController, _BetController, _GameController);
+                _Users.Add(user);
             }
 
-            foreach (var i in Enumerable.Range(0, handCount))
-            {
-                hands.Add(new Hand());
-            }
+            _HandController.Init(_Users, handCount);
+            _BetController.Init(_Users);
+            _GameController.Init(_Users);
 
             Reset();
         }
 
         public void Start()
         {
-            handController.IsExecute = true;
-            OnStateChange?.Invoke(handController.State);
+            _HandController.IsExecute = true;
+            OnStateChange?.Invoke(_HandController.State);
         }
 
         public bool CanSwitchState(out string message)
         {
             message = null;
-            IState prevState = gameController;
+            IState prevState = _GameController;
             foreach (var state in States)
             {
                 if (prevState.IsExecute)
@@ -90,7 +94,7 @@ namespace Xdd.Model.Cycles.BlackJack
 
         public void SwitchState()
         {
-            IState prevState = gameController;
+            IState prevState = _GameController;
             foreach (var state in States)
             {
                 if (prevState.IsExecute)
@@ -107,31 +111,9 @@ namespace Xdd.Model.Cycles.BlackJack
 
         public void Reset()
         {
-            handController = new HandController(users, hands);
-            _BetController = new BetController(users);
-            gameController = new GameController(users);
-
-            foreach (var user in users)
-            {
-                user.handController = handController;
-                user.betController = _BetController;
-                user.gameController = gameController;
-
-                foreach (var hand in user.hands)
-                {
-                    hand.gameController = gameController;
-                }
-            }
-
-            foreach (var hand in hands)
-            {
-                hand.gameController = gameController;
-            }
-
             foreach (var state in States)
             {
-                //state.OnIncorectState += (state) =>
-                    //Debug.LogAssertion($"Incorect {state} when active {States.FirstOrDefault(x => x.IsExecute)?.ToString() ?? "null"}");
+                state.Reset();
             }
         }
     }
@@ -140,11 +122,11 @@ namespace Xdd.Model.Cycles.BlackJack
     {
         event Action<BJCycleStates> OnStateChange;
 
-        User[] Users { get; }
+        IUser[] Users { get; }
 
-        HandController handController { get; }
+        IHandController HandController { get; }
         IBetController BetController { get; }
-        GameController gameController { get; }
+        IGameController GameController { get; }
 
         bool CanSwitchState(out string message);
         void Init(Wallet[] wallets, int handCount);

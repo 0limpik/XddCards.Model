@@ -1,11 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine.XR;
 using Xdd.Model.Cash;
 using Xdd.Model.Cycles.BlackJack.Controllers;
 
 namespace Xdd.Model.Cycles.BlackJack
 {
-    public class User
+    public interface IUser
+    {
+        decimal Cash { get; }
+        IHand[] Hands { get; }
+        decimal Amount { get; }
+
+        void Bet(decimal v);
+        void Release(IHand hand);
+        void Take(IHand hand);
+        bool CanBet(decimal v);
+    }
+
+    internal class User : IUser
     {
         public event Action OnBet;
 
@@ -14,26 +28,33 @@ namespace Xdd.Model.Cycles.BlackJack
         public decimal Cash => wallet.Cash;
         public decimal Amount { get; internal set; }
 
-        internal List<Hand> hands = new List<Hand>();
-        public IReadOnlyList<Hand> Hands => hands;
+        public IHand[] Hands => _Hands.ToArray();
+        internal List<Hand> _Hands = new List<Hand>();
 
-        internal HandController handController;
-        internal BetController betController;
-        internal GameController gameController;
+        private HandController handController;
+        private BetController betController;
+        private GameController gameController;
 
         public User(Wallet wallet)
         {
             this.wallet = wallet;
         }
 
-        public void Take()
+        public void Init(HandController handController, BetController betController, GameController gameController)
         {
-            handController.Take(this);
+            this.handController = handController;
+            this.betController = betController;
+            this.gameController = gameController;
         }
 
-        public void Release()
+        public void Take(IHand hand)
         {
-            handController.Release(this);
+            handController.Take(this, hand);
+        }
+
+        public void Release(IHand hand)
+        {
+            handController.Release(this, CheckAndGetHand(hand));
         }
 
         public bool CanBet(decimal amount)
@@ -45,6 +66,26 @@ namespace Xdd.Model.Cycles.BlackJack
         {
             betController.Bet(this, amount);
             OnBet?.Invoke();
+        }
+
+        internal bool Hit(Hand hand)
+        {
+            return gameController.Hit(CheckAndGetHand(hand).Player);
+        }
+
+        internal void Stand(IHand hand)
+        {
+            gameController.Stand(CheckAndGetHand(hand).Player);
+        }
+
+        internal void DoubleUp(IHand hand)
+        {
+            gameController.DoubleUp(CheckAndGetHand(hand).Player);
+        }
+
+        private Hand CheckAndGetHand(IHand hand)
+{
+           return _Hands.FirstOrDefault(x => x == hand) ?? throw new ArgumentException("hand has'n own user");
         }
     }
 }
