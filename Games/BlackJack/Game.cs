@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Xdd.Model.Games.BlackJack.Users;
 
 [assembly: InternalsVisibleTo("XddCards.Tests")]
