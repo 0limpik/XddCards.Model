@@ -9,10 +9,8 @@ using Xdd.Model.Games.BlackJack.Users;
 
 namespace Xdd.Model.Cycles.BlackJack.Controllers
 {
-    public interface IGameController
+    public interface IGameController : IState
     {
-        event Action<bool> OnChangeExecute;
-
         event Action<ICard> OnDillerUpHiddenCard;
         event Action OnGameEnd;
 
@@ -25,8 +23,6 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
     internal class GameController : AState, IGameController
     {
-        public override BJCycleStates State => BJCycleStates.Game;
-
         private const string c_usersCount = "Players must be more 0";
 
         private IBlackJack game = new Game();
@@ -170,6 +166,7 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
         public override void Reset()
         {
             game = new Game();
+            base.Reset();
         }
     }
 }

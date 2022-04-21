@@ -11,8 +11,6 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
     internal class HandController : AState, IHandController
     {
-        public override BJCycleStates State => BJCycleStates.Hand;
-
         private const string c_handCount = "Hand need more 0";
 
         private List<User> users;
@@ -58,7 +56,7 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
             _AvalibleHands.Add(userHand);
         }
 
-        void Check(User user)
+        private void Check(User user)
         {
             CheckExecute();
 
@@ -93,7 +91,7 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
         public override void Reset()
         {
-
+            base.Reset();
         }
     }
 }

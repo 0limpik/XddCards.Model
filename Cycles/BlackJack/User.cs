@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine.XR;
 using Xdd.Model.Cash;
 using Xdd.Model.Cycles.BlackJack.Controllers;
 
@@ -13,16 +12,15 @@ namespace Xdd.Model.Cycles.BlackJack
         IHand[] Hands { get; }
         decimal Amount { get; }
 
-        void Bet(decimal v);
-        void Release(IHand hand);
         void Take(IHand hand);
-        bool CanBet(decimal v);
+        void Release(IHand hand);
+
+        bool CanBet(decimal amount);
+        void Bet(decimal amount);
     }
 
     internal class User : IUser
     {
-        public event Action OnBet;
-
         internal Wallet wallet;
 
         public decimal Cash => wallet.Cash;
@@ -65,7 +63,6 @@ namespace Xdd.Model.Cycles.BlackJack
         public void Bet(decimal amount)
         {
             betController.Bet(this, amount);
-            OnBet?.Invoke();
         }
 
         internal bool Hit(Hand hand)

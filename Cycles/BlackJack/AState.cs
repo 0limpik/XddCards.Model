@@ -4,7 +4,6 @@ namespace Xdd.Model.Cycles.BlackJack
 {
     public interface IState
     {
-        BJCycleStates State { get; }
         bool IsExecute { get; set; }
 
         event Action<bool> OnChangeExecute;
@@ -18,8 +17,6 @@ namespace Xdd.Model.Cycles.BlackJack
 
     public abstract class AState : IState
     {
-        public abstract BJCycleStates State { get; }
-
         public event Action<AState> OnIncorectState;
 
         public event Action<bool> OnChangeExecute;
@@ -69,6 +66,10 @@ namespace Xdd.Model.Cycles.BlackJack
             message = null;
             return true;
         }
-        public abstract void Reset();
+
+        public virtual void Reset()
+        {
+            _IsExecute = false;
+        }
     }
 }

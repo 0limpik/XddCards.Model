@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Xdd.Model.Cash;
-using Xdd.Model.Cycles.BlackJack.Controllers;
 using Xdd.Model.Games;
 using Xdd.Model.Games.BlackJack;
 using Xdd.Model.Games.BlackJack.Users;
@@ -11,16 +10,19 @@ namespace Xdd.Model.Cycles.BlackJack
     public interface IHand
     {
         event Action<ICard> OnCardAdd;
+        event Action<GameResult> OnResult;
 
         bool IsPlaying { get; }
 
         bool CanTurn { get; }
         PlayerStatus? Status { get; }
+        IEnumerable<int> Scores { get; }
 
         bool Hit();
         void Stand();
         void DoubleUp();
     }
+
     public class Hand : IHand
     {
         internal IPlayer Player
@@ -28,7 +30,7 @@ namespace Xdd.Model.Cycles.BlackJack
             get => _Player;
             set
             {
-                if(_Player != null)
+                if (_Player != null)
                 {
                     _Player.OnCardAdd -= OnCardAddInvoke;
                     _Player.OnResult -= OnResultInvoke;

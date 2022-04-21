@@ -11,8 +11,6 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
     internal class BetController : AState, IBetController
     {
-        public override BJCycleStates State => BJCycleStates.Bet;
-
         private const string c_userHasTBets = "At least one player must have a bet";
 
         internal List<User> users;
@@ -95,6 +93,7 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
                 user.Amount = 0;
             }
+            base.Reset();
         }
     }
 }
