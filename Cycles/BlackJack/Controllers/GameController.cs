@@ -15,13 +15,11 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
         event Action OnGameEnd;
 
         IHand DealerHand { get; }
-        IHand[] PlayerHands { get; }
 
         void Start();
-        Task StartAsync();
     }
 
-    internal class GameController : AState, IGameController
+    internal class GameController : AState, IGameController, IStateController
     {
         private const string c_usersCount = "Players must be more 0";
 
@@ -36,7 +34,7 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
         private List<User> users;
 
-        public IHand[] PlayerHands => users.SelectMany(x => x._Hands).ToArray();
+        public IHand[] PlayerHands => users.SelectMany(x => x.Hands).ToArray();
 
         internal GameController()
         {
@@ -150,11 +148,6 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
                 }
                 throw new Exception($"uninspected {nameof(GameResult)}");
             }
-        }
-
-        public Task StartAsync()
-        {
-            throw new NotImplementedException();
         }
 
         public override void Reset()

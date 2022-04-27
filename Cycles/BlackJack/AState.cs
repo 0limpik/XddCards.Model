@@ -4,18 +4,18 @@ namespace Xdd.Model.Cycles.BlackJack
 {
     public interface IState
     {
-        bool IsExecute { get; set; }
-
         event Action<bool> OnChangeExecute;
-        event Action<AState> OnIncorectState;
+    }
 
+    public interface IStateController : IState
+    {
         bool CanEnter(out string message);
         bool CanExit(out string message);
 
         void Reset();
     }
 
-    public abstract class AState : IState
+    internal abstract class AState : IState
     {
         public event Action<AState> OnIncorectState;
 

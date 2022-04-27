@@ -9,7 +9,7 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
     }
 
-    internal class BetController : AState, IBetController
+    internal class BetController : AState, IBetController, IStateController
     {
         private const string c_userHasTBets = "At least one player must have a bet";
 
@@ -24,14 +24,14 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
         {
             Check(user);
 
-            return user.wallet.CanReserve(amount * user._Hands.Count);
+            return user.wallet.CanReserve(amount * user.Hands.Length);
         }
 
         internal void Bet(User user, decimal amount)
         {
             Check(user);
 
-            if (!user.wallet.CanReserve(amount * user._Hands.Count))
+            if (!user.wallet.CanReserve(amount * user.Hands.Length))
                 throw new ArgumentException("bet can't reserve");
 
             user.Amount = amount;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Xdd.Model.Cash;
 using Xdd.Model.Cycles.BlackJack.Controllers;
 
@@ -12,11 +13,11 @@ namespace Xdd.Model.Cycles.BlackJack
         IHand[] Hands { get; }
         decimal Amount { get; }
 
-        void Take(IHand hand);
-        void Release(IHand hand);
+        ValueTask Take(IHand hand);
+        ValueTask Release(IHand hand);
 
         bool CanBet(decimal amount);
-        void Bet(decimal amount);
+        ValueTask Bet(decimal amount);
     }
 
     internal class User : IUser
@@ -27,7 +28,7 @@ namespace Xdd.Model.Cycles.BlackJack
         public decimal Amount { get; internal set; }
 
         public IHand[] Hands => _Hands.ToArray();
-        internal List<Hand> _Hands = new List<Hand>();
+        public List<Hand> _Hands = new();
 
         private HandController handController;
         private BetController betController;
@@ -45,14 +46,22 @@ namespace Xdd.Model.Cycles.BlackJack
             this.gameController = gameController;
         }
 
-        public void Take(IHand hand)
+        public ValueTask Take(IHand hand)
         {
-            handController.Take(this, hand);
+            var takedHand = handController.Take(this, hand);
+
+            _Hands.Add(takedHand);
+
+            return new ValueTask();
         }
 
-        public void Release(IHand hand)
+        public ValueTask Release(IHand hand)
         {
-            handController.Release(this, CheckAndGetHand(hand));
+            var releasedHand = handController.Release(this, CheckAndGetHand(hand));
+
+            _Hands.Remove(releasedHand);
+
+            return new ValueTask();
         }
 
         public bool CanBet(decimal amount)
@@ -60,9 +69,11 @@ namespace Xdd.Model.Cycles.BlackJack
             return betController.CanBet(this, amount);
         }
 
-        public void Bet(decimal amount)
+        public ValueTask Bet(decimal amount)
         {
             betController.Bet(this, amount);
+
+            return new ValueTask();
         }
 
         internal bool Hit(Hand hand)
@@ -81,8 +92,8 @@ namespace Xdd.Model.Cycles.BlackJack
         }
 
         private Hand CheckAndGetHand(IHand hand)
-{
-           return _Hands.FirstOrDefault(x => x == hand) ?? throw new ArgumentException("hand has'n own user");
+        {
+            return _Hands.FirstOrDefault(x => x == hand) ?? throw new ArgumentException("hand has'n own user");
         }
     }
 }
