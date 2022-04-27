@@ -8,12 +8,12 @@ namespace Xdd.Model.Cycles.BlackJack
 {
     public interface IBJCycle
     {
-        event Action<IState> OnStateChange;
-
         IHandController HandController { get; }
         IBetController BetController { get; }
         IGameController GameController { get; }
-
+    }
+    public interface IBJCycleController : IBJCycle
+    {
         void Init(int handCount);
         void Start();
 
@@ -46,7 +46,7 @@ namespace Xdd.Model.Cycles.BlackJack
         public IGameController GameController => _GameController;
         public GameController _GameController;
 
-        private IEnumerable<IState> States
+        private IEnumerable<AState> States
         {
             get
             {
@@ -95,7 +95,7 @@ namespace Xdd.Model.Cycles.BlackJack
         public bool CanSwitchState(out string message)
         {
             message = null;
-            IState prevState = _GameController;
+            AState prevState = _GameController;
             foreach (var state in States)
             {
                 if (prevState.IsExecute)
@@ -114,7 +114,7 @@ namespace Xdd.Model.Cycles.BlackJack
 
         public void SwitchState()
         {
-            IState prevState = _GameController;
+            AState prevState = _GameController;
             foreach (var state in States)
             {
                 if (prevState.IsExecute)

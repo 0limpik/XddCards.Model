@@ -6,54 +6,54 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 {
     public interface IHandController : IState
     {
-        IHand[] AvalibleHands { get; }
+        IHand[] Hands { get; }
     }
 
-    internal class HandController : AState, IHandController
+    internal class HandController : AState, IHandController, IStateController
     {
         private const string c_handCount = "Hand need more 0";
 
         private List<User> users;
 
-        public IHand[] AvalibleHands => _AvalibleHands.ToArray();
-        private List<Hand> _AvalibleHands = new List<Hand>();
+        public IHand[] Hands => _Hands.ToArray();
+        private List<Hand> _Hands = new List<Hand>();
 
-        private int HandCount => users.SelectMany(x => x._Hands).Count();
+        private int HandCount => _Hands.Where(x => x.user != null).Count();
 
         public void Init(List<User> users, int handCount)
         {
             this.users = users;
 
-            _AvalibleHands.Clear();
+            _Hands.Clear();
 
             for (int i = 0; i < handCount; i++)
             {
-                _AvalibleHands.Add(new Hand());
+                _Hands.Add(new Hand());
             }
         }
 
-        internal void Take(User user, IHand hand)
+        internal Hand Take(User user, IHand hand)
         {
             Check(user);
 
-            var avalibleHand = _AvalibleHands.FirstOrDefault(x => x == hand) ?? throw new InvalidOperationException("has't free hand");
-
-            _AvalibleHands.Remove(avalibleHand);
+            var avalibleHand = _Hands.FirstOrDefault(x => x == hand && x.user == null)
+                ?? throw new InvalidOperationException("already taken");
 
             avalibleHand.user = user;
-            user._Hands.Add(avalibleHand);
+
+            return avalibleHand;
         }
 
-        internal void Release(User user, IHand hand)
+        internal Hand Release(User user, IHand hand)
         {
             Check(user);
 
-            var userHand = user._Hands.FirstOrDefault(x => x == hand) ?? throw new ArgumentException("has't hands");
+            var userHand = _Hands.FirstOrDefault(x => x == hand && x.user == user)
+                ?? throw new ArgumentException("can't release");
 
             userHand.user = null;
-            user._Hands.Remove(userHand);
 
-            _AvalibleHands.Add(userHand);
+            return userHand;
         }
 
         private void Check(User user)

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Xdd.Model.Cash;
 using Xdd.Model.Games;
 using Xdd.Model.Games.BlackJack;
@@ -18,9 +19,9 @@ namespace Xdd.Model.Cycles.BlackJack
         PlayerStatus? Status { get; }
         IEnumerable<int> Scores { get; }
 
-        bool Hit();
-        void Stand();
-        void DoubleUp();
+        ValueTask<bool> Hit();
+        ValueTask Stand();
+        ValueTask DoubleUp();
     }
 
     public class Hand : IHand
@@ -63,19 +64,23 @@ namespace Xdd.Model.Cycles.BlackJack
 
         internal User user;
 
-        public bool Hit()
+        public ValueTask<bool> Hit()
         {
-            return user.Hit(this);
+            return new ValueTask<bool>(user.Hit(this));
         }
 
-        public void Stand()
+        public ValueTask Stand()
         {
             user.Stand(this);
+
+            return new ValueTask();
         }
 
-        public void DoubleUp()
+        public ValueTask DoubleUp()
         {
             user.DoubleUp(this);
+
+            return new ValueTask();
         }
 
         private void OnCardAddInvoke(ICard card)

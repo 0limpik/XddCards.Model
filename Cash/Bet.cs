@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Xdd.Model.Cash
+﻿namespace Xdd.Model.Cash
 {
     public class Bet
     {
