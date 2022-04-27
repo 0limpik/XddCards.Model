@@ -25,19 +25,11 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
     {
         private const string c_usersCount = "Players must be more 0";
 
-        private IBlackJack game = new Game();
+        private IBlackJack game;
 
-        public event Action OnGameEnd
-        {
-            add => game.OnGameEnd += value;
-            remove => game.OnGameEnd -= value;
-        }
+        public event Action OnGameEnd;
 
-        public event Action<ICard> OnDillerUpHiddenCard
-        {
-            add => game.OnDillerUpHiddenCard += value;
-            remove => game.OnDillerUpHiddenCard -= value;
-        }
+        public event Action<ICard> OnDillerUpHiddenCard;
 
         public IHand DealerHand => _DealerHand;
         public Hand _DealerHand;
@@ -49,6 +41,7 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
         internal GameController()
         {
             _DealerHand = new Hand();
+            InitGame();
         }
 
         internal void Init(List<User> users)
@@ -119,6 +112,7 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
                 player.OnResult += (result) => OnResult(result, hand);
             }
+            game.Start();
         }
 
         protected override void Exit()
@@ -165,8 +159,16 @@ namespace Xdd.Model.Cycles.BlackJack.Controllers
 
         public override void Reset()
         {
-            game = new Game();
+            InitGame();
+
             base.Reset();
+        }
+
+        private void InitGame()
+        {
+            game = new Game();
+            game.OnGameEnd += () => OnGameEnd?.Invoke();
+            game.OnDillerUpHiddenCard += (card) => OnDillerUpHiddenCard?.Invoke(card);
         }
     }
 }
